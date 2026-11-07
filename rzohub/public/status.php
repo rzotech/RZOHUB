@@ -47,6 +47,7 @@ if ($isJson) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>System Health &mdash; RZO HUB</title>
     <link rel="stylesheet" href="assets/css/style.css">
+    <?php require_once __DIR__ . '/../includes/speed_insights.php'; ?>
     <style>
         .badge { padding: 4px 10px; border-radius: 4px; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; }
         .badge-success { background: rgba(34, 197, 94, 0.2); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.4); }

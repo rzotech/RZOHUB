@@ -52,6 +52,7 @@ $flash = getFlash();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>License Portal &mdash; RZO HUB</title>
     <link rel="stylesheet" href="assets/css/style.css">
+    <?php require_once __DIR__ . '/../includes/speed_insights.php'; ?>
 </head>
 <body>
     <header class="navbar">

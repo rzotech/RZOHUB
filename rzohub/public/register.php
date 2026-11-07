@@ -52,6 +52,7 @@ $hasGoogleConfig = (GOOGLE_CLIENT_ID !== 'YOUR_GOOGLE_CLIENT_ID.apps.googleuserc
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register &mdash; RZO HUB</title>
     <link rel="stylesheet" href="assets/css/style.css">
+    <?php require_once __DIR__ . '/../includes/speed_insights.php'; ?>
     <?php if ($hasGoogleConfig): ?>
         <script src="https://accounts.google.com/gsi/client" async defer></script>
     <?php endif; ?>
