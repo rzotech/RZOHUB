@@ -52,6 +52,10 @@ $flash = getFlash();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>License Portal &mdash; RZO HUB</title>
     <link rel="stylesheet" href="assets/css/style.css">
+    <script>
+        window.si = window.si || function () { (window.siq = window.siq || []).push(arguments); };
+    </script>
+    <script defer src="/_vercel/speed-insights/script.js"></script>
 </head>
 <body>
     <header class="navbar">

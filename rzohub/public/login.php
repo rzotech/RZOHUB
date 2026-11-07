@@ -47,6 +47,10 @@ $hasGoogleConfig = (GOOGLE_CLIENT_ID !== 'YOUR_GOOGLE_CLIENT_ID.apps.googleuserc
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign In &mdash; RZO HUB</title>
     <link rel="stylesheet" href="assets/css/style.css">
+    <script>
+        window.si = window.si || function () { (window.siq = window.siq || []).push(arguments); };
+    </script>
+    <script defer src="/_vercel/speed-insights/script.js"></script>
     <?php if ($hasGoogleConfig): ?>
         <script src="https://accounts.google.com/gsi/client" async defer></script>
     <?php endif; ?>
