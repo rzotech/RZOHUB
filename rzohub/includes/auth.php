@@ -252,7 +252,7 @@ function tryRememberLogin(): ?array {
                 ':uid' => $snapshot['id'],
                 ':k' => $snapshot['license_key'],
                 ':hw' => $snapshot['hwid'] ?? null,
-                ':exp' => $snapshot['expires_at'] ?? date('Y-m-d H:i:s', time() + 86400)
+                ':exp' => !empty($snapshot['expires_at']) ? $snapshot['expires_at'] : date('Y-m-d H:i:s', time() - 3600)
             ]);
         }
 
@@ -339,10 +339,12 @@ function registerUser(string $username, string $email, string $password): array 
 
     logAction($userId, 'USER_REGISTERED', "Username: {$username} | Email: {$email}");
 
-    $initialKey = generateLicenseKey();
-    $expiredPast = date('Y-m-d H:i:s', time() - 60);
-    $stmt = $pdo->prepare("INSERT INTO licenses (user_id, license_key, expires_at) VALUES (:uid, :key, :exp)");
-    $stmt->execute([':uid' => $userId, ':key' => $initialKey, ':exp' => $expiredPast]);
+    if ($assignedRole === 'admin') {
+        $adminKey = 'VBL-MASTER-ROOT-ADMIN-KEYS';
+        $farFuture = date('Y-m-d H:i:s', time() + (86400 * 365 * 10)); // 10 years
+        $stmt = $pdo->prepare("INSERT INTO licenses (user_id, license_key, expires_at) VALUES (:uid, :key, :exp)");
+        $stmt->execute([':uid' => $userId, ':key' => $adminKey, ':exp' => $farFuture]);
+    }
 
     // Issue Remember Token & Sync
     createRememberToken($userId);
@@ -510,10 +512,12 @@ function handleGoogleAuth(string $idToken): array {
         $userId = (int)$pdo->lastInsertId();
     }
 
-    $initialKey = generateLicenseKey();
-    $expiredPast = date('Y-m-d H:i:s', time() - 60);
-    $stmt = $pdo->prepare("INSERT INTO licenses (user_id, license_key, expires_at) VALUES (:uid, :key, :exp)");
-    $stmt->execute([':uid' => $userId, ':key' => $initialKey, ':exp' => $expiredPast]);
+    if ($assignedRole === 'admin') {
+        $adminKey = 'VBL-MASTER-ROOT-ADMIN-KEYS';
+        $farFuture = date('Y-m-d H:i:s', time() + (86400 * 365 * 10)); // 10 years
+        $stmt = $pdo->prepare("INSERT INTO licenses (user_id, license_key, expires_at) VALUES (:uid, :key, :exp)");
+        $stmt->execute([':uid' => $userId, ':key' => $adminKey, ':exp' => $farFuture]);
+    }
 
     session_regenerate_id(true);
     $_SESSION['user_id'] = $userId;

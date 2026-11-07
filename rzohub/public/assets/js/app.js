@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const keyElement = document.getElementById('license-key-text');
             if (!keyElement) return;
             const text = keyElement.innerText.trim();
-            if (!text || text === 'NO_LICENSE_ASSIGNED') return;
+            if (!text || text === 'NO_LICENSE_ASSIGNED' || text.includes('NO KEY ACTIVE') || text.includes('NO ACTIVE KEY')) return;
 
             navigator.clipboard.writeText(text).then(() => {
                 const originalText = copyBtn.innerText;

@@ -1,7 +1,7 @@
 <?php
 /**
  * RZO HUB - Linkvertise Monetization Engine
- * Dynamic publisher link generation for automated key claim sessions.
+ * Integration for Linkvertise Dynamic Links, Publisher API, and Advertiser Postback.
  */
 
 declare(strict_types=1);
@@ -12,7 +12,7 @@ require_once __DIR__ . '/helpers.php';
 require_once __DIR__ . '/lootlabs.php';
 
 /**
- * Creates a unique claim session and wraps it in a Linkvertise dynamic link
+ * Creates a unique claim session and wraps it in a Linkvertise dynamic monetized link
  */
 function createLinkvertiseKeySession(int $userId): array {
     $pdo = getDb();
@@ -24,7 +24,8 @@ function createLinkvertiseKeySession(int $userId): array {
     $token = bin2hex(random_bytes(32));
     $expiresAt = date('Y-m-d H:i:s', time() + 1800); // 30 minutes validity
 
-    $destinationUrl = getBaseUrl() . '/claim_key.php?token=' . urlencode($token);
+    // Destination target when user completes Linkvertise tasks
+    $destinationUrl = getBaseUrl() . '/claim_key.php?provider=linkvertise&token=' . urlencode($token);
 
     $memberId = defined('LINKVERTISE_MEMBER_ID') && !empty(LINKVERTISE_MEMBER_ID) 
         ? LINKVERTISE_MEMBER_ID 
@@ -52,3 +53,42 @@ function createLinkvertiseKeySession(int $userId): array {
     ];
 }
 
+/**
+ * Fires the Linkvertise Advertiser Postback to log conversion on the advertiser network
+ * URL: https://api-advertiser.linkvertise.com/postback?token=${TOKEN}&click_id=${CLICK_ID}&payout=${PAYOUT}
+ */
+function sendLinkvertisePostback(string $clickId, float $payout = 0.0): bool {
+    $postbackToken = defined('LINKVERTISE_POSTBACK_TOKEN') ? LINKVERTISE_POSTBACK_TOKEN : '';
+    if (empty($postbackToken)) {
+        return false;
+    }
+
+    $template = defined('LINKVERTISE_POSTBACK_URL') 
+        ? LINKVERTISE_POSTBACK_URL 
+        : 'https://api-advertiser.linkvertise.com/postback?token=${TOKEN}&click_id=${CLICK_ID}&payout=${PAYOUT}';
+
+    $targetUrl = str_replace(
+        ['${TOKEN}', '${CLICK_ID}', '${PAYOUT}', '{TOKEN}', '{CLICK_ID}', '{PAYOUT}'],
+        [urlencode($postbackToken), urlencode($clickId), number_format($payout, 4, '.', '')],
+        $template
+    );
+
+    $ch = curl_init($targetUrl);
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT => 6,
+        CURLOPT_SSL_VERIFYPEER => false,
+        CURLOPT_SSL_VERIFYHOST => false
+    ]);
+
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    $success = ($httpCode >= 200 && $httpCode < 400);
+    try {
+        logAction(null, 'LINKVERTISE_POSTBACK_FIRED', "Target: {$targetUrl} | Status: {$httpCode} | Response: " . substr((string)$response, 0, 100));
+    } catch (Exception $e) {}
+
+    return $success;
+}
