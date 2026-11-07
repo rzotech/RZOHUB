@@ -1,0 +1,79 @@
+<?php
+/**
+ * RZO HUB - Global Configuration (with .env & Environment Variable Support)
+ */
+
+declare(strict_types=1);
+
+// Load .env Loader
+require_once __DIR__ . '/../includes/env.php';
+
+// Base Paths
+define('ROOT_PATH', dirname(__DIR__));
+
+// Automatically parse .env from project root or parent directory if present
+if (file_exists(ROOT_PATH . '/.env')) {
+    loadEnv(ROOT_PATH . '/.env');
+}
+if (file_exists(dirname(ROOT_PATH) . '/.env')) {
+    loadEnv(dirname(ROOT_PATH) . '/.env');
+}
+
+// Disable public error disclosure for security
+error_reporting(0);
+ini_set('display_errors', '0');
+ini_set('display_startup_errors', '0');
+ini_set('expose_php', '0');
+
+// Database Configuration: Cloud PostgreSQL (Supabase) or Local SQLite Fallback
+define('DATABASE_URL', (string)env('DATABASE_URL', env('SUPABASE_DB_URL', '')));
+
+// Local SQLite Storage Path (Fallback when DATABASE_URL is not set)
+if (getenv('VERCEL') || !empty($_ENV['VERCEL']) || (file_exists('/tmp') && !is_writable(ROOT_PATH . '/database'))) {
+    define('DATABASE_PATH', (string)env('DATABASE_PATH', '/tmp/database.sqlite'));
+} else {
+    define('DATABASE_PATH', (string)env('DATABASE_PATH', ROOT_PATH . '/database/database.sqlite'));
+}
+
+// VBL License Configuration
+define('KEY_PREFIX', (string)env('KEY_PREFIX', 'VBL'));
+define('DISCORD_INVITE_URL', (string)env('DISCORD_INVITE_URL', 'https://discord.gg/vNExQNRK3'));
+
+// LootLabs Configuration
+define('LOOTLABS_API_KEY', (string)env('LOOTLABS_API_KEY', '13c3ae77ba1bd8370dd5606a1183e56e11f96a94ebcfd1e2b074199375face59'));
+define('LOOTLABS_API_ENDPOINT', (string)env('LOOTLABS_API_ENDPOINT', 'https://creators.lootlabs.gg/api/public/content_locker'));
+define('LOOTLABS_TIER_ID', (int)env('LOOTLABS_TIER_ID', 4));
+define('LOOTLABS_TASK_COUNT', (int)env('LOOTLABS_TASK_COUNT', 3));
+define('LOOTLABS_THEME', (int)env('LOOTLABS_THEME', 5));
+
+// Google OAuth 2.0 Credentials
+define('GOOGLE_CLIENT_ID', (string)env('GOOGLE_CLIENT_ID', 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com'));
+define('GOOGLE_CLIENT_SECRET', (string)env('GOOGLE_CLIENT_SECRET', 'YOUR_GOOGLE_CLIENT_SECRET'));
+
+// Root Administrator Credentials (Configurable via .env)
+define('ADMIN_USERNAME', (string)env('ADMIN_USERNAME', 'RZO HUB'));
+define('ADMIN_EMAIL', (string)env('ADMIN_EMAIL', 'rzohub@internasionalbusiness.com'));
+define('ADMIN_PASSWORD', (string)env('ADMIN_PASSWORD', 'amadiketu123'));
+
+// Cryptographic Secret for Stateless Remember Me & State Signing
+define('AUTH_SECRET_KEY', (string)env('AUTH_SECRET_KEY', hash('sha256', ADMIN_EMAIL . ':' . ADMIN_PASSWORD . ':RZO_SECURE_TOKEN_SALT_2026')));
+define('STORAGE_SYNC_URL', (string)env('STORAGE_SYNC_URL', ''));
+
+// License & Security Rules
+define('KEY_HOURS_PER_CLAIM', (int)env('KEY_HOURS_PER_CLAIM', 24));
+define('HWID_RESET_COOLDOWN_MINUTES', (int)env('HWID_RESET_COOLDOWN_MINUTES', 60));
+
+// Extended 30-Day Session Parameters
+ini_set('session.gc_maxlifetime', '2592000'); // 30 days
+ini_set('session.cookie_lifetime', '2592000'); // 30 days
+ini_set('session.cookie_httponly', '1');
+ini_set('session.use_only_cookies', '1');
+ini_set('session.cookie_samesite', 'Lax');
+
+if ((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 443)) {
+    ini_set('session.cookie_secure', '1');
+}
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
