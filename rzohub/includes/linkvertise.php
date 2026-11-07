@@ -1,7 +1,7 @@
 <?php
 /**
  * RZO HUB - Linkvertise Monetization Engine
- * Integration for Linkvertise Dynamic Links, Publisher API, and Advertiser Postback.
+ * Integration for Linkvertise Dynamic Links, Anti-Bypassing Verification, and Advertiser Postback.
  */
 
 declare(strict_types=1);
@@ -60,6 +60,42 @@ function createLinkvertiseKeySession(int $userId): array {
         'token' => $token,
         'provider' => 'linkvertise'
     ];
+}
+
+/**
+ * Verifies the Linkvertise Anti-Bypassing Hash against the official Linkvertise Publisher API
+ * Endpoint: POST https://publisher.linkvertise.com/api/v1/anti_bypassing?token={API_KEY}&hash={HASH}
+ */
+function verifyLinkvertiseHash(string $hash): bool {
+    $apiKey = defined('LINKVERTISE_API_KEY') ? LINKVERTISE_API_KEY : '';
+    if (empty($apiKey) || empty($hash)) {
+        return false;
+    }
+
+    $url = "https://publisher.linkvertise.com/api/v1/anti_bypassing?token=" . urlencode($apiKey) . "&hash=" . urlencode($hash);
+
+    $ch = curl_init($url);
+    curl_setopt_array($ch, [
+        CURLOPT_POST => true,
+        CURLOPT_POSTFIELDS => '',
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT => 8,
+        CURLOPT_SSL_VERIFYPEER => false,
+        CURLOPT_SSL_VERIFYHOST => false
+    ]);
+
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    $clean = strtoupper(trim((string)$response));
+    $isValid = ($httpCode === 200 && ($clean === 'TRUE' || str_contains($clean, 'TRUE') || str_contains($clean, '"STATUS":"SUCCESS"')));
+
+    try {
+        logAction(null, 'LINKVERTISE_ANTI_BYPASS_CHECK', "Hash: " . substr($hash, 0, 16) . "... | Code: {$httpCode} | Result: " . ($isValid ? 'VALID' : 'INVALID'));
+    } catch (Exception $e) {}
+
+    return $isValid;
 }
 
 /**

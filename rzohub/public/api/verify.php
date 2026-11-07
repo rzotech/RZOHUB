@@ -54,10 +54,14 @@ try {
     }
 } catch (Exception $e) {}
 
-$key = trim($_GET['key'] ?? $_POST['key'] ?? '');
-$hwid = trim($_GET['hwid'] ?? $_POST['hwid'] ?? '');
+$rawKey = trim((string)($_GET['key'] ?? $_POST['key'] ?? ''));
+$hwid = trim((string)($_GET['hwid'] ?? $_POST['hwid'] ?? ''));
 
-if (empty($key)) {
+// Thoroughly normalize key: strip invisible unicode, zero-width chars, BOM, quotes, and whitespace
+$cleanKey = preg_replace('/[\x00-\x1F\x7F\xC2\xA0\x{200B}-\x{200D}\x{FEFF}\s\'"]/u', '', $rawKey);
+$cleanKeyUpper = strtoupper(trim((string)$cleanKey));
+
+if (empty($cleanKeyUpper)) {
     echo json_encode([
         'status' => 'error',
         'valid' => false,
@@ -67,14 +71,27 @@ if (empty($key)) {
     exit;
 }
 
+// Prepare lookup variants for 100% resilient case & prefix matching
+$keyPrefixed = str_starts_with($cleanKeyUpper, 'VBL-') ? $cleanKeyUpper : ('VBL-' . ltrim($cleanKeyUpper, '-'));
+$keyNoHyphens = str_replace('-', '', $cleanKeyUpper);
+$keyNoHyphensPrefixed = str_starts_with($keyNoHyphens, 'VBL') ? $keyNoHyphens : ('VBL' . $keyNoHyphens);
+
 $stmt = $pdo->prepare("
     SELECT l.*, u.username, u.is_banned 
     FROM licenses l 
     JOIN users u ON l.user_id = u.id 
-    WHERE l.license_key = :k 
+    WHERE UPPER(TRIM(l.license_key)) = :k1 
+       OR UPPER(TRIM(l.license_key)) = :k2 
+       OR UPPER(REPLACE(l.license_key, '-', '')) = :k3 
+       OR UPPER(REPLACE(l.license_key, '-', '')) = :k4 
     LIMIT 1
 ");
-$stmt->execute([':k' => $key]);
+$stmt->execute([
+    ':k1' => $cleanKeyUpper,
+    ':k2' => $keyPrefixed,
+    ':k3' => $keyNoHyphens,
+    ':k4' => $keyNoHyphensPrefixed
+]);
 $license = $stmt->fetch();
 
 if (!$license) {
