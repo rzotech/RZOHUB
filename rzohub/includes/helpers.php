@@ -37,9 +37,16 @@ function getClientIp(): string {
 }
 
 /**
- * Robust Base URL resolver (detects Vercel HTTPS edge)
+ * Robust Base URL resolver (detects Vercel HTTPS edge and custom APP_URL)
  */
 function getBaseUrl(): string {
+    if (defined('APP_URL') && !empty(APP_URL)) {
+        return rtrim((string)APP_URL, '/');
+    }
+    if (function_exists('env') && !empty(env('APP_URL'))) {
+        return rtrim((string)env('APP_URL'), '/');
+    }
+
     $protocol = 'http';
 
     if (

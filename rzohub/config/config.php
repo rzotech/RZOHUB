@@ -42,8 +42,13 @@ define('LOOTLABS_TIER_ID', (int)env('LOOTLABS_TIER_ID', 4));
 define('LOOTLABS_TASK_COUNT', (int)env('LOOTLABS_TASK_COUNT', 3));
 define('LOOTLABS_THEME', (int)env('LOOTLABS_THEME', 5));
 
+// Public Application URL (Used for external callbacks / postbacks)
+define('APP_URL', (string)env('APP_URL', ''));
+
 // Linkvertise Configuration
 define('LINKVERTISE_MEMBER_ID', (string)env('LINKVERTISE_MEMBER_ID', '6748593'));
+define('LINKVERTISE_SLUG', (string)env('LINKVERTISE_SLUG', 'rzo-hub'));
+define('LINKVERTISE_CUSTOM_URL', (string)env('LINKVERTISE_CUSTOM_URL', ''));
 define('LINKVERTISE_API_KEY', (string)env('LINKVERTISE_API_KEY', '0437326c8a6af2c548e7b5be73f93a74cd1b86f067e50df7f84e6a3b533b2415'));
 define('LINKVERTISE_POSTBACK_URL', (string)env('LINKVERTISE_POSTBACK_URL', 'https://api-advertiser.linkvertise.com/postback?token=${TOKEN}&click_id=${CLICK_ID}&payout=${PAYOUT}'));
 define('LINKVERTISE_POSTBACK_TOKEN', (string)env('LINKVERTISE_POSTBACK_TOKEN', 'oaZaDiUIoKwqM1VfuiDxI27yAUrVKw7i75Y7Ar2FAzjm5vtIFsY7FdYyfTI63cHsQGLSCEZ7OGww58ZmPQ3SxkF5Ichpsad0KZjgGsTPHvxbN7l9DCkBNEEehXXJc4pwv5GiQoBM1k1TpSxb5anM7K44A7gv2Bbws4VdCNf686KTRut0fS1MWguzHBNCdGtSxEybK92Y'));

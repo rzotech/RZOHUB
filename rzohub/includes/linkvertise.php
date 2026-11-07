@@ -31,9 +31,18 @@ function createLinkvertiseKeySession(int $userId): array {
         ? LINKVERTISE_MEMBER_ID 
         : '6748593';
 
-    // Linkvertise dynamic publisher link (base64-encoded destination)
-    $encodedTarget = base64_encode($destinationUrl);
-    $finalLink = "https://linkvertise.com/{$memberId}/dynamic?r=" . urlencode($encodedTarget);
+    // Check for custom Linkvertise link configured in dashboard
+    $customLink = defined('LINKVERTISE_CUSTOM_URL') ? trim((string)LINKVERTISE_CUSTOM_URL) : '';
+    if (!empty($customLink)) {
+        $sep = (str_contains($customLink, '?')) ? '&' : '?';
+        $finalLink = $customLink . $sep . 'token=' . urlencode($token);
+    } else {
+        // Linkvertise dynamic publisher link structure with post slug
+        // Using link-to.net which is Linkvertise's official primary domain for publisher links
+        $encodedTarget = base64_encode($destinationUrl);
+        $slug = defined('LINKVERTISE_SLUG') && !empty(LINKVERTISE_SLUG) ? LINKVERTISE_SLUG : 'rzo-hub';
+        $finalLink = "https://link-to.net/{$memberId}/{$slug}/dynamic?r=" . urlencode($encodedTarget);
+    }
 
     $stmt = $pdo->prepare("INSERT INTO loot_sessions (user_id, token, lootlabs_link, expires_at) VALUES (:uid, :token, :link, :exp)");
     $stmt->execute([
