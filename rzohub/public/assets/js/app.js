@@ -10,11 +10,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const keyElement = document.getElementById('license-key-text');
             if (!keyElement) return;
             const text = keyElement.innerText.trim();
-            if (!text || text === 'BELUM ADA KUNCI') return;
+            if (!text || text === 'NO_LICENSE_ASSIGNED') return;
 
             navigator.clipboard.writeText(text).then(() => {
                 const originalText = copyBtn.innerText;
-                copyBtn.innerText = 'Disalin!';
+                copyBtn.innerText = 'Copied!';
                 copyBtn.classList.add('btn-primary');
                 copyBtn.classList.remove('btn-outline');
                 setTimeout(() => {
@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 temp.select();
                 document.execCommand('copy');
                 document.body.removeChild(temp);
-                alert('License Key disalin ke clipboard!');
+                alert('License key copied to clipboard!');
             });
         });
     }
@@ -53,15 +53,15 @@ document.addEventListener('DOMContentLoaded', () => {
             const seconds = sec % 60;
 
             let str = '';
-            if (days > 0) str += `${days}h `;
+            if (days > 0) str += `${days}d `;
             str += `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
             return str;
         }
 
         function updateTimers() {
             if (remainingSeconds <= 0) {
-                if (countdownEl) countdownEl.innerText = 'Kedaluwarsa';
-                if (cooldownEl) cooldownEl.innerText = '00:00:00 (Siap Ditambah)';
+                if (countdownEl) countdownEl.innerText = 'Expired';
+                if (cooldownEl) cooldownEl.innerText = '00:00:00 (Ready to Renew)';
 
                 // Dynamically unlock button if currently locked
                 if (getKeyBtn && getKeyBtn.tagName === 'BUTTON') {
@@ -71,7 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     newLink.className = 'btn btn-primary';
                     newLink.innerHTML = `
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path></svg>
-                        <span>Get Key / Tambah (+24 Jam)</span>
+                        <span>Get 24h License Key</span>
                     `;
                     getKeyBtn.parentNode.replaceChild(newLink, getKeyBtn);
                     if (cooldownBox) {

@@ -8,6 +8,6 @@ declare(strict_types=1);
 require_once __DIR__ . '/../includes/auth.php';
 
 logoutUser();
-setFlash('info', 'Anda telah keluar dari sesi.');
+setFlash('info', 'You have been signed out successfully.');
 header('Location: login.php');
 exit;

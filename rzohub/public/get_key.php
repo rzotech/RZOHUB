@@ -1,12 +1,13 @@
 <?php
 /**
- * RZO HUB - Secure LootLabs Dispatcher
+ * RZO HUB - Multi-Provider Monetization Dispatcher (LootLabs & Linkvertise)
  */
 
 declare(strict_types=1);
 
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/lootlabs.php';
+require_once __DIR__ . '/../includes/linkvertise.php';
 
 requireLogin();
 
@@ -20,12 +21,21 @@ $license = $stmt->fetch();
 
 if ($license && isLicenseActive($license['expires_at'])) {
     $timeInfo = formatRemainingTime($license['expires_at']);
-    setFlash('info', 'Key Anda masih aktif! Penambahan waktu baru dapat dilakukan setelah masa aktif saat ini selesai (Sisa waktu: ' . $timeInfo['text'] . ').');
+    setFlash('info', 'Your license is currently active. You can request a renewal once your current time expires (Remaining: ' . $timeInfo['text'] . ').');
     header('Location: dashboard.php');
     exit;
 }
 
-$claimSession = createKeyClaimSession($user['id']);
+$provider = strtolower(trim($_GET['provider'] ?? ''));
+if (!in_array($provider, ['lootlabs', 'linkvertise'], true)) {
+    $provider = defined('DEFAULT_KEY_PROVIDER') ? DEFAULT_KEY_PROVIDER : 'lootlabs';
+}
+
+if ($provider === 'linkvertise') {
+    $claimSession = createLinkvertiseKeySession($user['id']);
+} else {
+    $claimSession = createKeyClaimSession($user['id']);
+}
 
 if ($claimSession['success']) {
     $redirectLink = $claimSession['link'];
@@ -40,6 +50,12 @@ if ($claimSession['success']) {
         'lootlabs.gg',
         'creators.lootlabs.gg',
         'links.lootlabs.gg',
+        'linkvertise.com',
+        'linkvertise.net',
+        'link-to.net',
+        'up-to-down.net',
+        'direct-link.net',
+        'file-link.net',
         parse_url(getBaseUrl(), PHP_URL_HOST)
     ];
 
@@ -61,7 +77,7 @@ if ($claimSession['success']) {
     header('Location: ' . $redirectLink);
     exit;
 } else {
-    setFlash('danger', 'Failed to initialize LootLabs session: ' . ($claimSession['error'] ?? 'Unknown error'));
+    setFlash('danger', 'Failed to initialize session: ' . ($claimSession['error'] ?? 'Unknown error'));
     header('Location: dashboard.php');
     exit;
 }

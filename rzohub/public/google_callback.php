@@ -19,11 +19,14 @@ $authResult = handleGoogleAuth($credential);
 if ($authResult['success']) {
     if (!empty($authResult['is_new'])) {
         $msg = ($authResult['role'] === 'admin') 
-            ? 'Account created with Google! As the first user, you have been designated Administrator.'
+            ? 'Welcome Administrator! Account created via Google.'
             : 'Account created with Google! Welcome to RZO HUB.';
         setFlash('success', $msg);
     } else {
-        setFlash('success', 'Signed in successfully via Google.');
+        $msg = ($authResult['role'] === 'admin')
+            ? 'Welcome Administrator! Signed in via Google.'
+            : 'Signed in successfully via Google.';
+        setFlash('success', $msg);
     }
 
     if ($authResult['role'] === 'admin') {

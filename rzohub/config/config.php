@@ -28,12 +28,8 @@ ini_set('expose_php', '0');
 // Database Configuration: Cloud PostgreSQL (Supabase) or Local SQLite Fallback
 define('DATABASE_URL', (string)env('DATABASE_URL', env('SUPABASE_DB_URL', '')));
 
-// Local SQLite Storage Path (Fallback when DATABASE_URL is not set)
-if (getenv('VERCEL') || !empty($_ENV['VERCEL']) || (file_exists('/tmp') && !is_writable(ROOT_PATH . '/database'))) {
-    define('DATABASE_PATH', (string)env('DATABASE_PATH', '/tmp/database.sqlite'));
-} else {
-    define('DATABASE_PATH', (string)env('DATABASE_PATH', ROOT_PATH . '/database/database.sqlite'));
-}
+// Local Storage Fallback (In-memory mode to prevent any physical SQLite file on disk)
+define('DATABASE_PATH', (string)env('DATABASE_PATH', ':memory:'));
 
 // VBL License Configuration
 define('KEY_PREFIX', (string)env('KEY_PREFIX', 'VBL'));
@@ -45,6 +41,10 @@ define('LOOTLABS_API_ENDPOINT', (string)env('LOOTLABS_API_ENDPOINT', 'https://cr
 define('LOOTLABS_TIER_ID', (int)env('LOOTLABS_TIER_ID', 4));
 define('LOOTLABS_TASK_COUNT', (int)env('LOOTLABS_TASK_COUNT', 3));
 define('LOOTLABS_THEME', (int)env('LOOTLABS_THEME', 5));
+
+// Linkvertise Configuration
+define('LINKVERTISE_MEMBER_ID', (string)env('LINKVERTISE_MEMBER_ID', '6748593'));
+define('DEFAULT_KEY_PROVIDER', (string)env('DEFAULT_KEY_PROVIDER', 'lootlabs'));
 
 // Google OAuth 2.0 Credentials
 define('GOOGLE_CLIENT_ID', (string)env('GOOGLE_CLIENT_ID', 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com'));

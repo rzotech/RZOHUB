@@ -156,8 +156,11 @@ $flash = getFlash();
                         </span>
                     </div>
                 <?php else: ?>
-                    <a href="get_key.php" id="btn-get-key" class="btn btn-primary">
-                        <span>Get 24h License Key</span>
+                    <a href="get_key.php?provider=lootlabs" id="btn-get-key-loot" class="btn btn-primary">
+                        <span>Get Key (LootLabs)</span>
+                    </a>
+                    <a href="get_key.php?provider=linkvertise" id="btn-get-key-lv" class="btn btn-primary">
+                        <span>Get Key (Linkvertise)</span>
                     </a>
                 <?php endif; ?>
 
@@ -174,7 +177,7 @@ $flash = getFlash();
             <div class="guide-box">
                 <div class="guide-title">How to Activate Your License:</div>
                 <div class="guide-step">
-                    <strong>1. Start Verification:</strong> Click <em>"Get 24h License Key"</em> above to open the task portal.
+                    <strong>1. Choose Provider:</strong> Select either <em>LootLabs</em> or <em>Linkvertise</em> above to open your task session.
                 </div>
                 <div class="guide-step">
                     <strong>2. Complete Required Tasks:</strong> Open the task link and wait for the countdown timer to finish. You do not need to install untrusted files or purchase trials.
