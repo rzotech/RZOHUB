@@ -68,17 +68,91 @@ function getBaseUrl(): string {
 }
 
 function csrfToken(): string {
+    $secret = defined('AUTH_SECRET_KEY') ? (string)AUTH_SECRET_KEY : 'RZO_SECURE_TOKEN_SALT_2026';
+    $userId = $_SESSION['user_id'] ?? null;
+    if (!$userId && function_exists('currentUser')) {
+        $u = currentUser();
+        if ($u && !empty($u['id'])) {
+            $userId = (int)$u['id'];
+        }
+    }
+
+    if (!empty($userId)) {
+        $userToken = hash_hmac('sha256', 'csrf:user:' . $userId, $secret);
+        $_SESSION['csrf_token'] = $userToken;
+        if (empty($_COOKIE['rzo_csrf']) || $_COOKIE['rzo_csrf'] !== $userToken) {
+            if (!headers_sent()) {
+                setcookie('rzo_csrf', $userToken, [
+                    'expires' => time() + 86400 * 30,
+                    'path' => '/',
+                    'httponly' => true,
+                    'samesite' => 'Lax',
+                    'secure' => (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+                ]);
+            }
+            $_COOKIE['rzo_csrf'] = $userToken;
+        }
+        return $userToken;
+    }
+
+    if (!empty($_COOKIE['rzo_csrf']) && strlen($_COOKIE['rzo_csrf']) >= 32) {
+        $cookieToken = (string)$_COOKIE['rzo_csrf'];
+        $_SESSION['csrf_token'] = $cookieToken;
+        return $cookieToken;
+    }
+
     if (empty($_SESSION['csrf_token'])) {
         $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
     }
-    return $_SESSION['csrf_token'];
+    $token = (string)$_SESSION['csrf_token'];
+
+    if (!headers_sent()) {
+        setcookie('rzo_csrf', $token, [
+            'expires' => time() + 86400 * 7,
+            'path' => '/',
+            'httponly' => true,
+            'samesite' => 'Lax',
+            'secure' => (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+        ]);
+    }
+    $_COOKIE['rzo_csrf'] = $token;
+
+    return $token;
 }
 
 function verifyCsrfToken(?string $token): bool {
-    if (!$token || empty($_SESSION['csrf_token'])) {
+    if (!$token || strlen($token) < 16) {
         return false;
     }
-    return hash_equals($_SESSION['csrf_token'], $token);
+
+    $secret = defined('AUTH_SECRET_KEY') ? (string)AUTH_SECRET_KEY : 'RZO_SECURE_TOKEN_SALT_2026';
+
+    // 1. Authenticated User HMAC Check (Immune to Serverless Container Recycling)
+    $userId = $_SESSION['user_id'] ?? null;
+    if (!$userId && function_exists('currentUser')) {
+        $u = currentUser();
+        if ($u && !empty($u['id'])) {
+            $userId = (int)$u['id'];
+        }
+    }
+    if (!empty($userId)) {
+        $expectedUserToken = hash_hmac('sha256', 'csrf:user:' . $userId, $secret);
+        if (hash_equals($expectedUserToken, $token)) {
+            return true;
+        }
+    }
+
+    // 2. Double-Submit Cookie Check
+    if (!empty($_COOKIE['rzo_csrf']) && hash_equals($_COOKIE['rzo_csrf'], $token)) {
+        return true;
+    }
+
+    // 3. PHP Native Session Check
+    if (!empty($_SESSION['csrf_token']) && hash_equals($_SESSION['csrf_token'], $token)) {
+        return true;
+    }
+
+    return false;
 }
 
 function setFlash(string $type, string $message): void {
@@ -86,14 +160,40 @@ function setFlash(string $type, string $message): void {
         'type' => $type, // 'success', 'danger', 'info'
         'message' => $message
     ];
+
+    if (!headers_sent()) {
+        setcookie('rzo_flash', json_encode($_SESSION['flash']), [
+            'expires' => time() + 120,
+            'path' => '/',
+            'httponly' => false,
+            'samesite' => 'Lax',
+            'secure' => (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+        ]);
+    }
 }
 
 function getFlash(): ?array {
     if (isset($_SESSION['flash'])) {
         $flash = $_SESSION['flash'];
         unset($_SESSION['flash']);
+        if (!headers_sent()) {
+            setcookie('rzo_flash', '', time() - 3600, '/');
+        }
         return $flash;
     }
+
+    if (!empty($_COOKIE['rzo_flash'])) {
+        $raw = stripslashes($_COOKIE['rzo_flash']);
+        $flash = json_decode($raw, true);
+        if (!headers_sent()) {
+            setcookie('rzo_flash', '', time() - 3600, '/');
+        }
+        unset($_COOKIE['rzo_flash']);
+        if (is_array($flash) && !empty($flash['type']) && !empty($flash['message'])) {
+            return $flash;
+        }
+    }
+
     return null;
 }
 

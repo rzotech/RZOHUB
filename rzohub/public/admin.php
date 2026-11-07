@@ -95,14 +95,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if ($targetUserId === $adminUser['id']) {
                     setFlash('danger', 'You cannot delete your own administrator account.');
                 } else {
-                    $pdo->prepare("DELETE FROM remember_tokens WHERE user_id = :uid")->execute([':uid' => $targetUserId]);
-                    $pdo->prepare("DELETE FROM loot_sessions WHERE user_id = :uid")->execute([':uid' => $targetUserId]);
-                    $pdo->prepare("DELETE FROM licenses WHERE user_id = :uid")->execute([':uid' => $targetUserId]);
-                    $pdo->prepare("DELETE FROM logs WHERE user_id = :uid")->execute([':uid' => $targetUserId]);
-                    $pdo->prepare("DELETE FROM users WHERE id = :uid")->execute([':uid' => $targetUserId]);
+                    try {
+                        $pdo->prepare("DELETE FROM remember_tokens WHERE user_id = :uid")->execute([':uid' => $targetUserId]);
+                        $pdo->prepare("DELETE FROM loot_sessions WHERE user_id = :uid")->execute([':uid' => $targetUserId]);
+                        $pdo->prepare("DELETE FROM licenses WHERE user_id = :uid")->execute([':uid' => $targetUserId]);
+                        $pdo->prepare("DELETE FROM logs WHERE user_id = :uid")->execute([':uid' => $targetUserId]);
+                        $pdo->prepare("DELETE FROM users WHERE id = :uid")->execute([':uid' => $targetUserId]);
 
-                    logAction($adminUser['id'], 'ADMIN_DELETE_USER', "Deleted user account ID: {$targetUserId}");
-                    setFlash('success', "User #{$targetUserId} and all associated data have been permanently deleted.");
+                        logAction($adminUser['id'], 'ADMIN_DELETE_USER', "Deleted user account ID: {$targetUserId}");
+                        setFlash('success', "User #{$targetUserId} and all associated data have been permanently deleted.");
+                    } catch (Exception $e) {
+                        setFlash('danger', 'Failed to delete user: ' . $e->getMessage());
+                    }
                 }
                 break;
 
@@ -143,10 +147,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 break;
 
             case 'delete_key':
-                $stmt = $pdo->prepare("DELETE FROM licenses WHERE user_id = :uid");
-                $stmt->execute([':uid' => $targetUserId]);
-                logAction($adminUser['id'], 'ADMIN_DELETE_KEY', "Deleted license key for User #{$targetUserId}");
-                setFlash('success', "License key for User #{$targetUserId} has been deleted.");
+                try {
+                    $stmt = $pdo->prepare("DELETE FROM licenses WHERE user_id = :uid");
+                    $stmt->execute([':uid' => $targetUserId]);
+                    logAction($adminUser['id'], 'ADMIN_DELETE_KEY', "Deleted license key for User #{$targetUserId}");
+                    setFlash('success', "License key for User #{$targetUserId} has been deleted.");
+                } catch (Exception $e) {
+                    setFlash('danger', 'Failed to delete license key: ' . $e->getMessage());
+                }
                 break;
 
             case 'toggle_ban':
