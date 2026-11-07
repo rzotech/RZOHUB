@@ -148,3 +148,21 @@ function logAction(?int $userId, string $action, ?string $details = null): void 
         // Silent fail
     }
 }
+
+/**
+ * Render Vercel Speed Insights script
+ * Injects the Speed Insights tracking script for performance monitoring
+ */
+function renderSpeedInsights(): void {
+    // Only load in production or when VERCEL environment is detected
+    $isProduction = getenv('VERCEL') || !empty($_ENV['VERCEL']) || (defined('APP_ENV') && APP_ENV === 'production');
+    
+    if ($isProduction) {
+        echo <<<'HTML'
+<script>
+  window.si = window.si || function () { (window.siq = window.siq || []).push(arguments); };
+</script>
+<script defer src="/_vercel/speed-insights/script.js"></script>
+HTML;
+    }
+}

@@ -493,5 +493,6 @@ $flash = getFlash();
     <footer class="footer">
         &copy; <?= date('Y') ?> RZO HUB &mdash; Administrator Console
     </footer>
+    <?php renderSpeedInsights(); ?>
 </body>
 </html>

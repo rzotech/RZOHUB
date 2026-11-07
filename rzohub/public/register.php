@@ -140,5 +140,6 @@ $hasGoogleConfig = (GOOGLE_CLIENT_ID !== 'YOUR_GOOGLE_CLIENT_ID.apps.googleuserc
             Already have an account? <a href="login.php" style="color: var(--text-primary); font-weight: 600;">Sign In</a>
         </div>
     </div>
+    <?php renderSpeedInsights(); ?>
 </body>
 </html>

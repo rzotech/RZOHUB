@@ -136,6 +136,6 @@ if ($isJson) {
             </div>
         </div>
     </div>
+    <?php renderSpeedInsights(); ?>
 </body>
 </html>
-
