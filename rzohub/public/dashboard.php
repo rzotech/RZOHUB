@@ -240,5 +240,6 @@ $flash = getFlash();
     </footer>
 
     <script src="assets/js/app.js"></script>
+    <?php renderSpeedInsights(); ?>
 </body>
 </html>

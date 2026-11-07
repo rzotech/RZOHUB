@@ -135,5 +135,6 @@ $hasGoogleConfig = (GOOGLE_CLIENT_ID !== 'YOUR_GOOGLE_CLIENT_ID.apps.googleuserc
             Don't have an account? <a href="register.php" style="color: var(--text-primary); font-weight: 600;">Create Account</a>
         </div>
     </div>
+    <?php renderSpeedInsights(); ?>
 </body>
 </html>
