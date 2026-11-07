@@ -209,6 +209,10 @@ $flash = getFlash();
     <title>Admin Panel &mdash; RZO HUB</title>
     <link rel="stylesheet" href="assets/css/style.css">
     <script>
+        window.si = window.si || function () { (window.siq = window.siq || []).push(arguments); };
+    </script>
+    <script defer src="/_vercel/speed-insights/script.js"></script>
+    <script>
         function editKeyPrompt(userId, currentKey) {
             var newKey = prompt("Enter new custom license key:", currentKey || "VBL-");
             if (newKey && newKey.trim() !== "") {
