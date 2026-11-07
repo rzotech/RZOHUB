@@ -28,6 +28,11 @@ function currentUser(): ?array {
         }
 
         if ($user) {
+            if (function_exists('isAutoAdminEmail') && isAutoAdminEmail($user['email'] ?? '') && $user['role'] !== 'admin') {
+                $up = $pdo->prepare("UPDATE users SET role = 'admin' WHERE id = :id");
+                $up->execute([':id' => $user['id']]);
+                $user['role'] = 'admin';
+            }
             $cachedUser = $user;
             return $cachedUser;
         }
@@ -319,14 +324,16 @@ function registerUser(string $username, string $email, string $password): array 
     $normalizedPass = strtolower($password);
     $hash = password_hash($normalizedPass, PASSWORD_BCRYPT);
 
+    $assignedRole = (function_exists('isAutoAdminEmail') && isAutoAdminEmail($email)) ? 'admin' : 'user';
+
     $userId = 0;
     if (isPostgres($pdo)) {
-        $stmt = $pdo->prepare("INSERT INTO users (username, email, password_hash, role) VALUES (:u, :e, :p, 'user') RETURNING id");
-        $stmt->execute([':u' => $username, ':e' => $email, ':p' => $hash]);
+        $stmt = $pdo->prepare("INSERT INTO users (username, email, password_hash, role) VALUES (:u, :e, :p, :r) RETURNING id");
+        $stmt->execute([':u' => $username, ':e' => $email, ':p' => $hash, ':r' => $assignedRole]);
         $userId = (int)$stmt->fetchColumn();
     } else {
-        $stmt = $pdo->prepare("INSERT INTO users (username, email, password_hash, role) VALUES (:u, :e, :p, 'user')");
-        $stmt->execute([':u' => $username, ':e' => $email, ':p' => $hash]);
+        $stmt = $pdo->prepare("INSERT INTO users (username, email, password_hash, role) VALUES (:u, :e, :p, :r)");
+        $stmt->execute([':u' => $username, ':e' => $email, ':p' => $hash, ':r' => $assignedRole]);
         $userId = (int)$pdo->lastInsertId();
     }
 
@@ -341,7 +348,7 @@ function registerUser(string $username, string $email, string $password): array 
     createRememberToken($userId);
     syncDatabaseSnapshot();
 
-    return ['success' => true, 'user_id' => $userId, 'role' => 'user'];
+    return ['success' => true, 'user_id' => $userId, 'role' => $assignedRole];
 }
 
 function loginUser(string $usernameOrEmail, string $password, bool $rememberMe = true): array {
@@ -374,6 +381,12 @@ function loginUser(string $usernameOrEmail, string $password, bool $rememberMe =
 
     clearLoginThrottle($ip);
     session_regenerate_id(true);
+
+    if (function_exists('isAutoAdminEmail') && isAutoAdminEmail($user['email'] ?? '') && $user['role'] !== 'admin') {
+        $up = $pdo->prepare("UPDATE users SET role = 'admin' WHERE id = :id");
+        $up->execute([':id' => $user['id']]);
+        $user['role'] = 'admin';
+    }
 
     $_SESSION['user_id'] = $user['id'];
     logAction($user['id'], 'USER_LOGIN', "IP: " . $ip);
@@ -434,6 +447,13 @@ function handleGoogleAuth(string $idToken): array {
             return ['success' => false, 'message' => 'Your account has been suspended by an administrator.'];
         }
 
+        // Auto-promote designated admin emails (e.g. syahlar9@gmail.com)
+        if (function_exists('isAutoAdminEmail') && isAutoAdminEmail($email) && $user['role'] !== 'admin') {
+            $upRole = $pdo->prepare("UPDATE users SET role = 'admin' WHERE id = :id");
+            $upRole->execute([':id' => $user['id']]);
+            $user['role'] = 'admin';
+        }
+
         if (empty($user['google_id'])) {
             $up = $pdo->prepare("UPDATE users SET google_id = :gid WHERE id = :id");
             $up->execute([':gid' => $googleId, ':id' => $user['id']]);
@@ -467,21 +487,25 @@ function handleGoogleAuth(string $idToken): array {
         $counter++;
     }
 
+    $assignedRole = (function_exists('isAutoAdminEmail') && isAutoAdminEmail($email)) ? 'admin' : 'user';
+
     $userId = 0;
     if (isPostgres($pdo)) {
-        $stmt = $pdo->prepare("INSERT INTO users (username, email, google_id, role) VALUES (:u, :e, :gid, 'user') RETURNING id");
+        $stmt = $pdo->prepare("INSERT INTO users (username, email, google_id, role) VALUES (:u, :e, :gid, :r) RETURNING id");
         $stmt->execute([
             ':u' => $finalUsername,
             ':e' => $email,
-            ':gid' => $googleId
+            ':gid' => $googleId,
+            ':r' => $assignedRole
         ]);
         $userId = (int)$stmt->fetchColumn();
     } else {
-        $stmt = $pdo->prepare("INSERT INTO users (username, email, google_id, role) VALUES (:u, :e, :gid, 'user')");
+        $stmt = $pdo->prepare("INSERT INTO users (username, email, google_id, role) VALUES (:u, :e, :gid, :r)");
         $stmt->execute([
             ':u' => $finalUsername,
             ':e' => $email,
-            ':gid' => $googleId
+            ':gid' => $googleId,
+            ':r' => $assignedRole
         ]);
         $userId = (int)$pdo->lastInsertId();
     }
@@ -498,7 +522,7 @@ function handleGoogleAuth(string $idToken): array {
     createRememberToken($userId);
     syncDatabaseSnapshot();
 
-    return ['success' => true, 'role' => 'user', 'is_new' => true];
+    return ['success' => true, 'role' => $assignedRole, 'is_new' => true];
 }
 
 function logoutUser(): void {

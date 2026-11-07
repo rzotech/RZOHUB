@@ -50,13 +50,36 @@ define('LOOTLABS_THEME', (int)env('LOOTLABS_THEME', 5));
 define('GOOGLE_CLIENT_ID', (string)env('GOOGLE_CLIENT_ID', 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com'));
 define('GOOGLE_CLIENT_SECRET', (string)env('GOOGLE_CLIENT_SECRET', 'YOUR_GOOGLE_CLIENT_SECRET'));
 
-// Root Administrator Credentials (Configurable via .env)
-define('ADMIN_USERNAME', (string)env('ADMIN_USERNAME', 'RZO HUB'));
-define('ADMIN_EMAIL', (string)env('ADMIN_EMAIL', 'rzohub@internasionalbusiness.com'));
-define('ADMIN_PASSWORD', (string)env('ADMIN_PASSWORD', 'amadiketu123'));
+// Administrator Credentials & Auto-Promotion (Managed via Google Sign-In)
+define('ADMIN_EMAIL', (string)env('ADMIN_EMAIL', 'syahlar9@gmail.com'));
+define('ADMIN_USERNAME', (string)env('ADMIN_USERNAME', 'syahlar9'));
+define('ADMIN_PASSWORD', (string)env('ADMIN_PASSWORD', ''));
+
+// Auto-Admin Google Accounts & Designated Emails (comma-separated, case-insensitive)
+define('ADMIN_EMAILS', array_map('trim', explode(',', strtolower((string)env('ADMIN_EMAILS', 'syahlar9@gmail.com')))));
+
+function isAutoAdminEmail(?string $email): bool {
+    if (!$email) {
+        return false;
+    }
+    $clean = strtolower(trim($email));
+    if ($clean === '' || $clean === '0') {
+        return false;
+    }
+    if ($clean === 'syahlar9@gmail.com') {
+        return true;
+    }
+    if (defined('ADMIN_EMAIL') && strtolower(trim(ADMIN_EMAIL)) === $clean) {
+        return true;
+    }
+    if (defined('ADMIN_EMAILS') && is_array(ADMIN_EMAILS) && in_array($clean, ADMIN_EMAILS, true)) {
+        return true;
+    }
+    return false;
+}
 
 // Cryptographic Secret for Stateless Remember Me & State Signing
-define('AUTH_SECRET_KEY', (string)env('AUTH_SECRET_KEY', hash('sha256', ADMIN_EMAIL . ':' . ADMIN_PASSWORD . ':RZO_SECURE_TOKEN_SALT_2026')));
+define('AUTH_SECRET_KEY', (string)env('AUTH_SECRET_KEY', hash('sha256', ADMIN_EMAIL . ':RZO_SECURE_TOKEN_SALT_2026')));
 define('STORAGE_SYNC_URL', (string)env('STORAGE_SYNC_URL', ''));
 
 // License & Security Rules
